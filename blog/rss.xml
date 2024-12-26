@@ -101,7 +101,6 @@
 <p>看起来这个<code>shell</code>脚本进程最终被子进程<code>tmux</code>创建进程替换。虽然没有完全理解为什么，但是这样不影响正常使用。</p>
 <p>目前可以实现云服务控制台软重启后，minecraft server自动上线。</p>
 <p>如果需要并非机器重启时服务进程杀死后server自动重启，还可以在上面服务里加上<code>Restart=always</code>，我后面视情况考虑要不要添加。</p>]]></content:encoded>
-            <author>ribombalt1@gmail.com (RibomBalt)</author>
             <category>Linux</category>
             <category>Minecraft</category>
             <category>Game</category>

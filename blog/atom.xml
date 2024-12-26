@@ -102,7 +102,6 @@
 <p>如果需要并非机器重启时服务进程杀死后server自动重启，还可以在上面服务里加上<code>Restart=always</code>，我后面视情况考虑要不要添加。</p>]]></content>
         <author>
             <name>RibomBalt</name>
-            <email>ribombalt1@gmail.com</email>
         </author>
         <category label="Linux" term="Linux"/>
         <category label="Minecraft" term="Minecraft"/>
