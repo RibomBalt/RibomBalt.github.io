@@ -1,0 +1,11 @@
+RibomBalt:
+  name: RibomBalt
+  title: CTF enthusiastist, GeoPhysics PhD, Amateur coder
+  image_url: https://github.com/RibomBalt.png
+  page:
+    # customize the url of the author page at /blog/authors/<permalink>
+    permalink: '/RibomBalt'
+  socials:
+    github: RibomBalt
+    stackoverflow: RibomBalt
+    bilibili: https://space.bilibili.com/32687856

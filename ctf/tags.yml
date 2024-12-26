@@ -1,0 +1,39 @@
+facebook:
+  label: Facebook
+  permalink: /facebook
+  description: Facebook tag description
+
+hello:
+  label: Hello
+  permalink: /hello
+  description: Hello tag description
+
+docusaurus:
+  label: Docusaurus
+  permalink: /docusaurus
+  description: Docusaurus tag description
+
+hola:
+  label: Hola
+  permalink: /hola
+  description: Hola tag description
+
+CTF:
+  label: CTF
+  permalink: /ctf
+  description: Catch-The-Flag contests writeups / learning notes
+
+Game:
+  label: Game
+  permalink: /game
+  description: Actually I'm a hardcore gamer!
+
+Hardware:
+  label: Hardware
+  permalink: /hardware
+  description: Raspberry Pi / Arduino / Other chips / IoT / Bluetooth / Wi-Fi
+
+Linux:
+  label: Linux
+  permalink: /linux
+  description: Linux / Ubuntu / WSL2

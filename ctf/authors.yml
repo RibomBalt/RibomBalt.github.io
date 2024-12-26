@@ -1,0 +1,12 @@
+RibomBalt:
+  name: Lysithea
+  title: "CTF enthusiastist. Usual teamname: Lysithea, Ribom, RibomBalt"
+  email: ribombalt1@gmail.com
+  image_url: https://github.com/RibomBalt.png
+  page:
+    # customize the url of the author page at /blog/authors/<permalink>
+    permalink: '/RibomBalt'
+  socials:
+    github: RibomBalt
+    stackoverflow: RibomBalt
+    ctftimes: https://ctftime.org/team/282941
