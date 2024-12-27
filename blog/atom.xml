@@ -86,6 +86,21 @@
 <p>此外，earlyoom在小内存机器会导致相当多的内存浪费，也会导致服务端被提前kill掉，增加不稳定因素。考虑到服务器暂时不跑别的服务，我还是打算相信<code>-Xmx</code>的控制内存的能力。</p>
 <p>另外，我使用的<code>Paper 1.21</code>客户端内置<code>Spark</code>状态检测插件，可以查看游戏内CPU/内存占用情况。以下命令可以获取接下来10min的服务器状态并生成一份在线报告。</p>
 <div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">/spark profiler start --timeout 600</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="发送消息推送">发送消息推送<a href="https://ribombalt.github.io/blog/2024/12/23/first-minecraft-server#%E5%8F%91%E9%80%81%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81" class="hash-link" aria-label="发送消息推送的直接链接" title="发送消息推送的直接链接">​</a></h3>
+<p>用<code>say</code>命令可以全服通告，<code>tell</code>命令可以对单人私信。</p>
+<p>如何发送格式化消息（<a href="https://www.reddit.com/r/Minecraft/comments/r8xic/strikethrough_underline_and_italics_in_multiplayer/" target="_blank" rel="noopener noreferrer">原帖</a>）</p>
+<blockquote>
+<p>And how exactly do you make this formatting happen?
+EDIT to summarize the answers in various comments:
+On the server console, press Alt-6 to enter §, followed by one of these letters:</p>
+<ul>
+<li>l - bold</li>
+<li>m - strikethrough</li>
+<li>n - underline</li>
+<li>o - italic</li>
+<li>r - reset formatting</li>
+</ul>
+</blockquote>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="自动重启">自动重启<a href="https://ribombalt.github.io/blog/2024/12/23/first-minecraft-server#%E8%87%AA%E5%8A%A8%E9%87%8D%E5%90%AF" class="hash-link" aria-label="自动重启的直接链接" title="自动重启的直接链接">​</a></h3>
 <p>考虑到服务器存在崩溃的可能，为了快速恢复状态，加了一个简单的快速重启脚本</p>
 <blockquote>
