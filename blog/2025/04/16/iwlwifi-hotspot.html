@@ -10,7 +10,7 @@
 
 <link rel="alternate" type="application/rss+xml" href="/ctf-writeup/rss.xml" title="Ribom&#39;s blogs RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/ctf-writeup/atom.xml" title="Ribom&#39;s blogs Atom Feed"><link rel="stylesheet" href="/assets/css/styles.94616287.css">
-<script src="/assets/js/runtime~main.8f5fa45c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.8fd828c7.js" defer="defer"></script>
 <script src="/assets/js/main.1bc11dda.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -20,7 +20,9 @@
 <li>然而，LAR功能在很多情况下不能正常工作，无法正确设置地区码，而默认值00是最严格的限制，在5GHz信号段没有任何一个信道可以建立热点通信。</li>
 <li>2019年的Linux 5.5前，intel网卡驱动<code>iwlwifi</code>存在一个选项<code>lar_disable</code>可以禁用LAR功能，然而有报道表明这个选项会导致固件崩溃，因此在5.5版本被移除。尽管可以通过内核补丁把选项重新打入，本人测试并未成功开启热点。</li>
 <li>本文使用了另一个补丁，似乎直接绕过了LAR设置的信道标志，可以实现在LAR设置不正确的情况下能够在特定5GHz信道发射，从而能够同时连接和建立无线热点。</li>
+<li></li>
 </ul>
+<!-- -->
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="背景">背景<a href="#背景" class="hash-link" aria-label="背景的直接链接" title="背景的直接链接">​</a></h2>
 <p>由于实在受不了笔记本的Win10天天催我更新，我最终给笔记本装了Linux双系统。经过一系列调研后，</p>
 <p>然而一段时间使用后，我发现Linux KDE上的网络管理面板中，只要连接了5GHz Wi-fi，创建热点的按钮就会消失。而对于相同的网卡，使用Windows启动时，可以建立5GHz热点。</p>
@@ -62,7 +64,7 @@
 <p>为了（给一般网卡）提供地区码设置选项，Arch系需要安装<code>wireless-regdb</code>（即debian系的crda包），包含了WLAN允许波段的数据库。Wifi的地区码可以通过<code>iw reg get</code>查看，并可以通过<code>iw reg set [code]</code>进行设置。</p>
 <div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">$ iw reg get</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <p>可以发现intel网卡设备<code>phy0</code>的地区设置为00（DFS-UNSET）。</p>
-<p>但当我们尝试使用<code>iw reg set CN</code>时，网卡的地区设置没有发生任何变化！这是因为这个设备上面标记了<code>self-managed</code>，表明这个设备的地区码由自己管理（也就是LAR机制），不能被用户设置。一般来说，操作系统可以通过驱动设置网卡的地区码，但是Intel采用了一套LAR位置感知管控机制，会主动探测周围的无线信号，确定目前处于哪个地区 。</p>
+<p>但当我们尝试使用<code>iw reg set CN</code>时，网卡的地区设置没有发生任何变化！这是因为这个设备上面标记了<code>self-managed</code>，表明这个设备的地区码由自己管理（也就是LAR机制），不能被用户设置。一般来说，操作系统可以通过驱动设置网卡的地区码，但是Intel采用了一套LAR位置感知管控机制，会主动探测周围的无线信号，确定目前处于哪个地区。</p>
 <p>然而网卡地区返回00，说明LAR并没有正确设置地区码，这也是很多人遇到过的BUG。当LAR出错时，会回到默认的00设置，这个设置几乎是各国禁止波段的交集，在5GHz波段没有任何一个波段是允许<code>IR</code>（no initiating radiation），也就无法建立热点。值得一提的是，这个问题很早应该就被提出了，但intel一直没有去修（曾经看到intel的forum被喷了十几楼，现在找不到了）</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="lar_disable"><code>lar_disable</code><a href="#lar_disable" class="hash-link" aria-label="lar_disable的直接链接" title="lar_disable的直接链接">​</a></h2>
 <p>在早期Linux Kernel中，Intel Wifi驱动<code>iwlwifi</code>存在一个内核选项<code>lar_disable</code>，可以禁用LAR功能。可以通过这个设置启动这一功能（重启生效）。</p>

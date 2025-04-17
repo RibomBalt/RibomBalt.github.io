@@ -20,7 +20,9 @@
 <li>然而，LAR功能在很多情况下不能正常工作，无法正确设置地区码，而默认值00是最严格的限制，在5GHz信号段没有任何一个信道可以建立热点通信。</li>
 <li>2019年的Linux 5.5前，intel网卡驱动<code>iwlwifi</code>存在一个选项<code>lar_disable</code>可以禁用LAR功能，然而有报道表明这个选项会导致固件崩溃，因此在5.5版本被移除。尽管可以通过内核补丁把选项重新打入，本人测试并未成功开启热点。</li>
 <li>本文使用了另一个补丁，似乎直接绕过了LAR设置的信道标志，可以实现在LAR设置不正确的情况下能够在特定5GHz信道发射，从而能够同时连接和建立无线热点。</li>
+<li></li>
 </ul>
+<!-- -->
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="背景">背景<a href="https://ribombalt.github.io/blog/2025/04/16/iwlwifi-hotspot#%E8%83%8C%E6%99%AF" class="hash-link" aria-label="背景的直接链接" title="背景的直接链接">​</a></h2>
 <p>由于实在受不了笔记本的Win10天天催我更新，我最终给笔记本装了Linux双系统。经过一系列调研后，</p>
 <p>然而一段时间使用后，我发现Linux KDE上的网络管理面板中，只要连接了5GHz Wi-fi，创建热点的按钮就会消失。而对于相同的网卡，使用Windows启动时，可以建立5GHz热点。</p>
