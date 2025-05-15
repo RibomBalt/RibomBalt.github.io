@@ -2,11 +2,145 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://RibomBalt.github.io/blog</id>
     <title>Ribom's blogs Blog</title>
-    <updated>2025-04-20T00:00:00.000Z</updated>
+    <updated>2025-05-16T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://RibomBalt.github.io/blog"/>
     <subtitle>Ribom's blogs Blog</subtitle>
     <icon>https://RibomBalt.github.io/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[关于WSL上玩Ollama把我C盘写满了的事]]></title>
+        <id>https://RibomBalt.github.io/blog/2025/05/16/wsl-disk-move</id>
+        <link href="https://RibomBalt.github.io/blog/2025/05/16/wsl-disk-move"/>
+        <updated>2025-05-16T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[TL;DR]]></summary>
+        <content type="html"><![CDATA[<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tldr">TL;DR<a href="https://ribombalt.github.io/blog/2025/05/16/wsl-disk-move#tldr" class="hash-link" aria-label="TL;DR的直接链接" title="TL;DR的直接链接">​</a></h2>
+<ul>
+<li>WSL的磁盘文件在C盘，我这里默认位置是<code>C:\Users\&lt;username&gt;\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\LocalState\ext4.vhdx</code></li>
+<li>WSL磁盘空间会自动增长但不会收缩，可以用<a href="https://superuser.com/questions/1600749/how-to-change-the-maximum-size-of-the-disk-image-of-my-wsl2-distro" target="_blank" rel="noopener noreferrer">多种方法回收空间</a></li>
+<li>把C盘写满了会报错退出。</li>
+<li>可以用<code>wsl --manage Ubuntu-22.04 --move /d/WSL/Ubuntu-22.04</code>把WSL的磁盘文件移动到D盘。</li>
+<li>也可以用<code>wsl --export Ubuntu-22.04 /d/WSL/Ubuntu-22.04.tar</code>导出到tar文件，然后用<code>wsl --import Ubuntu-22.04 /d/WSL/Ubuntu-22.04 /d/WSL/Ubuntu-22.04.tar</code>导入到D盘。</li>
+</ul>
+<!-- -->
+<h2></h2>]]></content>
+        <author>
+            <name>RibomBalt</name>
+        </author>
+        <category label="Linux" term="Linux"/>
+        <category label="AI" term="AI"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[网络共享打印机使用指南 - 以Fuji Xerox DocuPrint CM305 df为例]]></title>
+        <id>https://RibomBalt.github.io/blog/2025/05/15/printer</id>
+        <link href="https://RibomBalt.github.io/blog/2025/05/15/printer"/>
+        <updated>2025-05-15T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[TL;DR;]]></summary>
+        <content type="html"><![CDATA[<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tldr">TL;DR;<a href="https://ribombalt.github.io/blog/2025/05/15/printer#tldr" class="hash-link" aria-label="TL;DR;的直接链接" title="TL;DR;的直接链接">​</a></h2>
+<ul>
+<li>这是介绍学校实验室打印机使用方法的教程。</li>
+<li>需要直接看怎么添加打印机请直接跳转第2章。</li>
+</ul>
+<!-- -->
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-背景知识">1. 背景知识<a href="https://ribombalt.github.io/blog/2025/05/15/printer#1-%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86" class="hash-link" aria-label="1. 背景知识的直接链接" title="1. 背景知识的直接链接">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="打印机一般知识">打印机一般知识<a href="https://ribombalt.github.io/blog/2025/05/15/printer#%E6%89%93%E5%8D%B0%E6%9C%BA%E4%B8%80%E8%88%AC%E7%9F%A5%E8%AF%86" class="hash-link" aria-label="打印机一般知识的直接链接" title="打印机一般知识的直接链接">​</a></h3>
+<p>常见的网络打印协议：</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Line_Printer_Daemon_protocol" target="_blank" rel="noopener noreferrer">LPD/LPR</a>: 全称为Line Printer Daemon/Line Printer Remote，是一种网络打印协议。一般用TCP515端口通信，一般需要一个打印机地址和一个打印队列名称。</li>
+<li><a href="https://en.wikipedia.org/wiki/Internet_Printing_Protocol" target="_blank" rel="noopener noreferrer">IPP</a>: 全称为Internet Printing Protocol，是一种网络打印协议。一般用TCP631端口通信，支持多种打印机和打印机队列的设置。</li>
+<li>Port 9100: 是一种纯文本的打印协议，直接向打印机发送文本数据即可打印纯文本内容。注意发送PDF/图片时会导致乱码。</li>
+<li>FTP/SMB: 这些是常见的文件共享协议，也可以用于向打印机传递文件。</li>
+</ul>
+<p>还有一些其他的，例如WSD协议等，也可以用于打印，本人没有使用过，不太了解不做介绍。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="关于fuji-xerox-docuprint-cm305-df">关于Fuji Xerox DocuPrint CM305 df<a href="https://ribombalt.github.io/blog/2025/05/15/printer#%E5%85%B3%E4%BA%8Efuji-xerox-docuprint-cm305-df" class="hash-link" aria-label="关于Fuji Xerox DocuPrint CM305 df的直接链接" title="关于Fuji Xerox DocuPrint CM305 df的直接链接">​</a></h3>
+<p>这是一款激光打印机，可以用网线连接校园网进行网络打印（但不支持连接Wifi），也可以接USB线接电脑打印，也可以插U盘在控制面板上选择文件打印。（需要注意对大部分打印机管理软件，USB连接的打印机和网络打印机都是两台不同的打印机）。本文将以介绍网络打印为主，但可能部分设置也适用于USB打印。</p>
+<blockquote>
+<p>这款打印机已经比较老旧了，一些驱动程序等已经不再分发了。目前维护手册可以<a href="https://m1support-fb.fujifilm.com/driver_downloads/DocuPrint%20CM305%20df%20User%20Guide%20(TC).pdf" target="_blank" rel="noopener noreferrer">从官网下载</a>。<a href="https://www.manualslib.com/manual/543534/Fuji-Xerox-Docuprint-Cm305-Df.html" target="_blank" rel="noopener noreferrer">manuallibs</a>上可以在线预览手册。</p>
+</blockquote>
+<p>直接访问打印机所在IP地址，可以进入在线的Centerware Internet Services进行配置。其中，【属性】下面包括了大部分设置，【打印机】下也有少量其他设置。</p>
+<p><img decoding="async" loading="lazy" alt="frameprop" src="https://ribombalt.github.io/assets/images/printer-settings-73d99ec53c99ee7abde086c825b1fcba.png" width="203" height="718" class="img_ev3q"></p>
+<p>其中一些比较重要的设置：</p>
+<ul>
+<li>端口启动：表示开放了那些端口。部分不需要的服务可以关闭以减小风险。</li>
+<li>机器管理员设定：设置管理员名称、密码。</li>
+<li>IP地址限制：内置的防火墙功能，可以限制一部分IP地址访问。</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-各系统下具体配置">2. 各系统下具体配置<a href="https://ribombalt.github.io/blog/2025/05/15/printer#2-%E5%90%84%E7%B3%BB%E7%BB%9F%E4%B8%8B%E5%85%B7%E4%BD%93%E9%85%8D%E7%BD%AE" class="hash-link" aria-label="2. 各系统下具体配置的直接链接" title="2. 各系统下具体配置的直接链接">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="windows">Windows<a href="https://ribombalt.github.io/blog/2025/05/15/printer#windows" class="hash-link" aria-label="Windows的直接链接" title="Windows的直接链接">​</a></h3>
+<p>Windows下，需要安装打印机驱动。fujifilm官网事实上已经停止提供这个型号的驱动，但是可以装高一个版本的CM405 df的驱动，<a href="https://support-fb.fujifilm.com/processDriverForm.do?ctry_code=SG&amp;lang_code=en&amp;d_lang=en&amp;corp_pid=DPCM405DF&amp;rts=null&amp;model=DocuPrint+CM405+df&amp;type_id=2&amp;oslist=Windows+11+64bit&amp;lang_list=zh_CN" target="_blank" rel="noopener noreferrer">下载地址</a></p>
+<p>接下来需要添加打印机。根据打印机本身设置，可以选择添加IPP或LPR打印机，这两种仅仅是和打印机的不同通讯方式，效果是等价的，任选其一即可。</p>
+<p>对于IPP打印机：</p>
+<ul>
+<li>设置中搜索【添加打印机或扫描仪】，点击添加设备。</li>
+<li>正常情况下扫描不到设备，过一段时间出现【手动添加】，点进去。</li>
+<li>二选一：<!-- -->
+<ul>
+<li>如果添加IPP打印机：<!-- -->
+<ul>
+<li>【按名称选择共享打印机】：输入<code>http://&lt;打印机IP地址&gt;/ipp</code></li>
+</ul>
+</li>
+<li>如果添加LPR打印机：<!-- -->
+<ul>
+<li>【手动设置】-【创建新端口】-【LPR Port】-填入打印机IP地址和打印机队列名称（队列名可以任意填写）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>添加打印机后需要选择打印机驱动，左边选<code>FUJIFILM</code>，右边选择唯一的<code>FF K519p for Docuprint CM405 df PCL6</code>，点击下一步。</li>
+</ul>
+<p>后面可以一路完成。</p>
+<blockquote>
+<p>注意：如果打印机设置中，启用了【打印用户限制】，即使【允许非指定用户打印】是开启的，以下步骤也是必须的。</p>
+</blockquote>
+<ul>
+<li>在打印机设置中，点进刚刚添加的打印机，点【打印机属性】</li>
+<li>在【配置】选项卡，【账户管理】，账户管理办法选择【无】</li>
+</ul>
+<p>之后就可以正常打印了。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="macos">MacOS<a href="https://ribombalt.github.io/blog/2025/05/15/printer#macos" class="hash-link" aria-label="MacOS的直接链接" title="MacOS的直接链接">​</a></h3>
+<p>Mac OS 不需要安装驱动。</p>
+<p>在系统默认的打印机设置中，可以添加打印机。</p>
+<p>TODO</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="linux-以manjaro为例">Linux (以Manjaro为例)<a href="https://ribombalt.github.io/blog/2025/05/15/printer#linux-%E4%BB%A5manjaro%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Linux (以Manjaro为例)的直接链接" title="Linux (以Manjaro为例)的直接链接">​</a></h3>
+<p>TODO</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="android以huawei为例">Android（以Huawei为例）<a href="https://ribombalt.github.io/blog/2025/05/15/printer#android%E4%BB%A5huawei%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Android（以Huawei为例）的直接链接" title="Android（以Huawei为例）的直接链接">​</a></h3>
+<p>TODO</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-管理员配置">3. 管理员配置<a href="https://ribombalt.github.io/blog/2025/05/15/printer#3-%E7%AE%A1%E7%90%86%E5%91%98%E9%85%8D%E7%BD%AE" class="hash-link" aria-label="3. 管理员配置的直接链接" title="3. 管理员配置的直接链接">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="安全问题">安全问题<a href="https://ribombalt.github.io/blog/2025/05/15/printer#%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98" class="hash-link" aria-label="安全问题的直接链接" title="安全问题的直接链接">​</a></h3>
+<p>将打印机暴露在校园网公网里有安全风险，主要包括：</p>
+<ul>
+<li>未授权访问。简单来说，没有防火墙的情况下，任何人扫描到这个端口都可以发送大量打印请求，导致打印机运行大量的打印任务，浪费纸张油墨，甚至导致打印机卡死。</li>
+<li>信息泄露：访问管理员面板可以看到打印机使用记录、配置信息等。</li>
+<li>可能包含漏洞的服务：如果打印机固件存在更严重漏洞，可能导致远程代码执行等问题。</li>
+</ul>
+<p>安全建议：</p>
+<ul>
+<li>如果可以，建议将打印机放在局域网中，例如无线路由器下，需要打印时连接到路由器的Wifi后进行打印。</li>
+<li>关闭不需要的打印服务。如果没有特殊需求，建议只保留LPR和IPP服务。<!-- -->
+<ul>
+<li>尤其是关闭9100端口。这个端口外部发进来就是直接打印纯文本。已经见到有人扫出这个端口然后当一般Web服务去fuzz攻击，导致打印机打出一堆恶意HTTP请求，非常难绷。</li>
+</ul>
+</li>
+<li>修改管理员密码<!-- -->
+<ul>
+<li>打印机默认账户和密码直接被写在维护手册，任何人都可以开放获取。获得管理员密码后任何人都可以修改打印机后台设置。</li>
+</ul>
+</li>
+<li>如有需要，可以限制IP地址范围</li>
+<li>如果可以，建议正确配置用户认证功能，并关闭无验证打印。<!-- -->
+<ul>
+<li>目前还不清楚如何为打印机添加可打印的用户，因此目前是允许无验证打印的。</li>
+<li>对应设置在打印机管理页面的【打印机-打印用户限制】下</li>
+</ul>
+</li>
+</ul>]]></content>
+        <author>
+            <name>RibomBalt</name>
+        </author>
+        <category label="Hardware" term="Hardware"/>
+        <category label="Linux" term="Linux"/>
+        <category label="Windows" term="Windows"/>
+    </entry>
     <entry>
         <title type="html"><![CDATA[WSL2 CUDA禁用共享内存]]></title>
         <id>https://RibomBalt.github.io/blog/2025/04/20/disable-nvidia-shared-gpu</id>
