@@ -28,6 +28,62 @@
             <category>AI</category>
         </item>
         <item>
+            <title><![CDATA[本地玩Ollama调教记录]]></title>
+            <link>https://RibomBalt.github.io/blog/2025/05/16/ollama</link>
+            <guid>https://RibomBalt.github.io/blog/2025/05/16/ollama</guid>
+            <pubDate>Fri, 16 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[TL;DR;]]></description>
+            <content:encoded><![CDATA[<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tldr">TL;DR;<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#tldr" class="hash-link" aria-label="TL;DR;的直接链接" title="TL;DR;的直接链接">​</a></h2>
+<ul>
+<li>本文介绍了从Huggingface（或其镜像）下载大语言模型，通过llama.cpp转换格式、量化后在普通台式机上部署的过程。</li>
+</ul>
+<!-- -->
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="目的需求">目的需求<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E7%9B%AE%E7%9A%84%E9%9C%80%E6%B1%82" class="hash-link" aria-label="目的需求的直接链接" title="目的需求的直接链接">​</a></h2>
+<p>一般认为本地部署基座大模型不是划算的行为。例如deepseek全量模型671B参数，无法在家用显卡上进行部署。而7B,13B左右的模型参数性能相对孱弱，生成质量无法满足生产需求。另一方面，目前已经有相当多的低价大模型，硅基流动、openrouter等模型提供商的API可能更适合平时需求。</p>
+<p>尽管如此，当内容不方便出网时，仍然有本地部署大模型的需求，其中的典型是无审查NSFW生成。通常的角色扮演对模型的要求没有那么高，13B左右的模型已经可以达到理想的效果。本文使用了<code>mistral-nemo-instruct-2407</code>模型，参数量为12.2B，以部署在NVIDIA RTX 4060Ti 8GB显卡的WSL2 CUDA上为例。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="huggingface下载模型">Huggingface下载模型<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#huggingface%E4%B8%8B%E8%BD%BD%E6%A8%A1%E5%9E%8B" class="hash-link" aria-label="Huggingface下载模型的直接链接" title="Huggingface下载模型的直接链接">​</a></h2>
+<p>可以通过<code>huggingface-cli</code>下载模型，这一命令可以通过<code>pip install -U "huggingface_hub[cli]"</code>获取。考虑到Huggingface服务器在国外，可以考虑使用<code>hf-mirror</code>镜像，只需要指定环境变量即可。</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">HF_ENDPOINT=https://hf-mirror huggingface-cli download ${model_name} --local-dir ${model_dir}</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="转换huggingface模型为gguf格式并量化">转换Huggingface模型为gguf格式并量化<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E8%BD%AC%E6%8D%A2huggingface%E6%A8%A1%E5%9E%8B%E4%B8%BAgguf%E6%A0%BC%E5%BC%8F%E5%B9%B6%E9%87%8F%E5%8C%96" class="hash-link" aria-label="转换Huggingface模型为gguf格式并量化的直接链接" title="转换Huggingface模型为gguf格式并量化的直接链接">​</a></h2>
+<p>Huggingface模型一般是safetensors格式的，Ollama需要gguf格式的模型，需要转换。我这里使用llama.cpp转换，众所周知Ollama是llama.cpp的封装。</p>
+<p>下载<code>llama.cpp</code>并编译。我的设备有CUDA，因此编译指令为：</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">cmake -B build -DGGML_CUDA=ON</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">cmake --build build --config Release</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>直接使用根目录的<code>convert_hf_to_gguf.py</code>脚本转换模型（注意带update的脚本是直接从huggingface下载的模型转换的，我们这里采用手动下载的模式）</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">python3 convert_hf_to_gguf.py ${model_dir}</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>转换完成后会在相同目录下生成<code>{model_name}-F16.gguf</code>的ggml F16模型，为了保证小显存能够跑起来，需要进行量化。具体量化到什么程度由模型-显存大小决定，最好在显存允许的情况下尽可能大。对于我的情况，跑<code>mistral-nemo-instruct-2407-12b</code>，在8GB显存下，可以量化到<code>Q4_0</code>，占用7.1GB显存。<a href="https://github.com/ggml-org/llama.cpp/blob/master/tools/quantize/README.md" target="_blank" rel="noopener noreferrer">官方文档</a>有量化参数和推理速度、PPL（困惑度）对照表（PPL代表下一个词合理选择数，一般越少模型质量越高）。另有一些博客介绍量化质量的对照表，可以参考<a href="https://www.cnblogs.com/farwish/p/18768190" target="_blank" rel="noopener noreferrer">这篇</a>（事实上感觉这种文章都不怎么权威，仅供参考了）。</p>
+<p>量化命令如下：</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">${build_dir}/llama-quantize ${orig_model}.gguf ${quantized_model}.gguf Q4_0</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="运行模型">运行模型<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%9E%8B" class="hash-link" aria-label="运行模型的直接链接" title="运行模型的直接链接">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="使用llamacpp运行模型">使用<code>llama.cpp</code>运行模型<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E4%BD%BF%E7%94%A8llamacpp%E8%BF%90%E8%A1%8C%E6%A8%A1%E5%9E%8B" class="hash-link" aria-label="使用llamacpp运行模型的直接链接" title="使用llamacpp运行模型的直接链接">​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">${build_dir}/llama-server -m ${quantized_model}.gguf --ngl 30 --host "127.0.0.1"</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>其中<code>ngl</code>参数表示把多少层运算放进GPU，不指定这个参数则纯粹CPU推理，层数越高占用显存越多。我这里30层基本就把专用显存占满了。如果使用<code>llama-cli</code>，则可以直接在命令行推理。另外，对于第三方客户端，llama.cpp不需要指定模型名</p>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="已知问题">已知问题<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E5%B7%B2%E7%9F%A5%E9%97%AE%E9%A2%98" class="hash-link" aria-label="已知问题的直接链接" title="已知问题的直接链接">​</a></h4>
+<p>llama.cpp运行Q4模型时，输出长度通常较短，这是已知问题，可以通过提示词中要求返回长输出内容来缓解。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="使用ollama运行">使用ollama运行<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E4%BD%BF%E7%94%A8ollama%E8%BF%90%E8%A1%8C" class="hash-link" aria-label="使用ollama运行的直接链接" title="使用ollama运行的直接链接">​</a></h3>
+<p>首先新建一个<code>${model_name}.mf</code>文件，只有一行内容：</p>
+<div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">FROM {model_name}.gguf</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>然后运行：</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">ollama create ${model_name} -f ${model_name}.mf</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<blockquote>
+<p>注意：假如提示<code>Error: could not connect to ollama app, is it running?</code>，Linux下是需要<code>systemctl start ollama</code>启动后台服务的。Windows下想必同理。</p>
+</blockquote>
+<p>之后ollama会以自己的形式导入模型（会在<code>~/.ollama</code>内存储一份拷贝）。</p>
+<p>创建模型后，通过<code>ollama run ${model_name}</code>命令运行模型，注意这里的模型名是<code>ollama create</code>时指定的名字。ollama是支持同时运行多个模型的，所以需要模型名进行区分。（有种说法说ollama有点接近docker的定位）。注意退出进程后模型可能还在后台运行，需要<code>ollama stop ${model_name}</code>停止模型。如需移除模型，使用<code>ollama rm ${model_name}</code>命令。</p>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="已知问题-1">已知问题<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E5%B7%B2%E7%9F%A5%E9%97%AE%E9%A2%98-1" class="hash-link" aria-label="已知问题的直接链接" title="已知问题的直接链接">​</a></h4>
+<p>实测本地Ollama部署后会出现胡言乱语的问题（gibberish）。有<a href="https://ywctech.net/ml-ai/ollama-import-custom-gguf/#ollama-%E5%99%B4%E4%BA%82%E7%A2%BC" target="_blank" rel="noopener noreferrer">博客</a>指出这可能是因为显存不足，推荐减小上下文宽度，可以在mf模型描述文件中减小。</p>
+<div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">PARAMETER num_ctx 512</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="复制代码到剪贴板" title="复制" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>实测减小上下文宽度后缓解，但效果仍然远差于llama.cpp，原因不明。事实上500的上下文宽度已经无法满足一些比较复杂的角色扮演需要了。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="第三方客户端">第三方客户端<a href="https://ribombalt.github.io/blog/2025/05/16/ollama#%E7%AC%AC%E4%B8%89%E6%96%B9%E5%AE%A2%E6%88%B7%E7%AB%AF" class="hash-link" aria-label="第三方客户端的直接链接" title="第三方客户端的直接链接">​</a></h2>
+<p>llama.cpp是openai compatible的，可以直接添加新的provider。下面是我常用的一些第三方客户端。</p>
+<ul>
+<li>aichat</li>
+<li>cherry-studio（暂无移动端）</li>
+<li>chatbox（安卓端）</li>
+</ul>]]></content:encoded>
+            <category>Linux</category>
+            <category>AI</category>
+        </item>
+        <item>
             <title><![CDATA[网络共享打印机使用指南 - 以Fuji Xerox DocuPrint CM305 df为例]]></title>
             <link>https://RibomBalt.github.io/blog/2025/05/15/printer</link>
             <guid>https://RibomBalt.github.io/blog/2025/05/15/printer</guid>
@@ -88,7 +144,7 @@
 </ul>
 <p>后面可以一路完成。</p>
 <blockquote>
-<p>注意：如果打印机设置中，启用了【打印用户限制】，即使【允许非指定用户打印】是开启的，以下步骤也是必须的。</p>
+<p>注意：【打印机设置】中，如果启用了【打印用户限制】，即使【允许非指定用户打印】是开启的，以下步骤也是必须的。</p>
 </blockquote>
 <ul>
 <li>在打印机设置中，点进刚刚添加的打印机，点【打印机属性】</li>
@@ -99,9 +155,9 @@
 <p>Mac OS 不需要安装驱动。</p>
 <p>在系统默认的打印机设置中，可以添加打印机。</p>
 <p>TODO</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="linux-以manjaro为例">Linux (以Manjaro为例)<a href="https://ribombalt.github.io/blog/2025/05/15/printer#linux-%E4%BB%A5manjaro%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Linux (以Manjaro为例)的直接链接" title="Linux (以Manjaro为例)的直接链接">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="linux-以manjaro-kde为例">Linux (以Manjaro KDE为例)<a href="https://ribombalt.github.io/blog/2025/05/15/printer#linux-%E4%BB%A5manjaro-kde%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Linux (以Manjaro KDE为例)的直接链接" title="Linux (以Manjaro KDE为例)的直接链接">​</a></h3>
 <p>TODO</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="android以huawei为例">Android（以Huawei为例）<a href="https://ribombalt.github.io/blog/2025/05/15/printer#android%E4%BB%A5huawei%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Android（以Huawei为例）的直接链接" title="Android（以Huawei为例）的直接链接">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="android��以huawei为例">Android（以Huawei为例）<a href="https://ribombalt.github.io/blog/2025/05/15/printer#android%E4%BB%A5huawei%E4%B8%BA%E4%BE%8B" class="hash-link" aria-label="Android（以Huawei为例）的直接链接" title="Android（以Huawei为例）的直接链接">​</a></h3>
 <p>TODO</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-管理员配置">3. 管理员配置<a href="https://ribombalt.github.io/blog/2025/05/15/printer#3-%E7%AE%A1%E7%90%86%E5%91%98%E9%85%8D%E7%BD%AE" class="hash-link" aria-label="3. 管理员配置的直接链接" title="3. 管理员配置的直接链接">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="安全问题">安全问题<a href="https://ribombalt.github.io/blog/2025/05/15/printer#%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98" class="hash-link" aria-label="安全问题的直接链接" title="安全问题的直接链接">​</a></h3>
