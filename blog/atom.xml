@@ -44,6 +44,8 @@
         </author>
         <category label="Linux" term="Linux"/>
         <category label="Windows" term="Windows"/>
+        <category label="WSL2" term="WSL2"/>
+        <category label="Docker" term="Docker"/>
     </entry>
     <entry>
         <title type="html"><![CDATA[关于WSL上玩Ollama把我C盘写满了的事]]></title>
@@ -68,7 +70,7 @@
         <category label="AI" term="AI"/>
     </entry>
     <entry>
-        <title type="html"><![CDATA[本地玩Ollama调教记录]]></title>
+        <title type="html"><![CDATA[本地部署大模型调教记录（llama.cpp/ollama）]]></title>
         <id>https://RibomBalt.github.io/blog/2025/05/16/ollama</id>
         <link href="https://RibomBalt.github.io/blog/2025/05/16/ollama"/>
         <updated>2025-05-16T00:00:00.000Z</updated>

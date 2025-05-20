@@ -42,6 +42,8 @@
 <p>然而我本机测试后，这个反而是不需要加的，加了就无法访问。这个问题之前在纯Linux系统遇到过类似的，docker确实会修改iptables导致无视ufw等防火墙规则，造成安全问题。这里反而是需要它暴露。</p>]]></content:encoded>
             <category>Linux</category>
             <category>Windows</category>
+            <category>WSL2</category>
+            <category>Docker</category>
         </item>
         <item>
             <title><![CDATA[关于WSL上玩Ollama把我C盘写满了的事]]></title>
@@ -63,7 +65,7 @@
             <category>AI</category>
         </item>
         <item>
-            <title><![CDATA[本地玩Ollama调教记录]]></title>
+            <title><![CDATA[本地部署大模型调教记录（llama.cpp/ollama）]]></title>
             <link>https://RibomBalt.github.io/blog/2025/05/16/ollama</link>
             <guid>https://RibomBalt.github.io/blog/2025/05/16/ollama</guid>
             <pubDate>Fri, 16 May 2025 00:00:00 GMT</pubDate>

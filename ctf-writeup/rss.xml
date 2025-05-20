@@ -52,6 +52,7 @@
 <hr>
 <p>这届本来是抱着学一学异构的想法来的，结果反而深陷OI题陷阱，拼尽全力无法战胜BUG（包括我的和评测机的），最后没时间了反而没玩到CUDA和NPU，而且又痛失30名了。</p>
 <p>按WP要求保留了生成式AI使用声明：本次比赛借助了Github Copilot代码补全和deepseek大模型。Copilot部分没有聊天记录留存，deepseek聊天记录图片存放于附件deepseek文件夹中，正文中会出现部分整段生成内容。</p>
+<!-- -->
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="a-签到">A 签到<a href="https://ribombalt.github.io/ctf-writeup/2025/01/27/hpcgame2#a-%E7%AD%BE%E5%88%B0" class="hash-link" aria-label="A 签到的直接链接" title="A 签到的直接链接">​</a></h2>
 <p>善用F12 CSS selector. 1898</p>
@@ -69,7 +70,7 @@
 <p>C语言中，假设有函数 <code>void f(const void **p);</code>，我们有 <code>void **q;</code>，请问不使用强制类型转换，直接调用 <code>f(q)</code> 是否符合 C 的规范？</p>
 <p>否
 我第一遍猜错了，怎么回事呢？</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="3-cpu-architecture">3. CPU Architecture<a href="https://ribombalt.github.io/ctf-writeup/2025/01/27/hpcgame2#3-cpu-architecture" class="hash-link" aria-label="3. CPU Architecture的直接链接" title="3. CPU Architecture的�直接链接">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="3-cpu-architecture">3. CPU Architecture<a href="https://ribombalt.github.io/ctf-writeup/2025/01/27/hpcgame2#3-cpu-architecture" class="hash-link" aria-label="3. CPU Architecture的直接链接" title="3. CPU Architecture的直接链接">​</a></h3>
 <p>（填数字）</p>
 <p>ARM架构的<code>sve2</code>指令集具有可变向量长度，且无需重新编译代码，就可以在不同向量长度的硬件上运行。<code>sve2</code>指令集的最小硬件向量长度是____，最大硬件向量长度是____。</p>
 <p>128 2048
